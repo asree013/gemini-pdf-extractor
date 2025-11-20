@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import { Data, Effect } from "effect";
 import type { z } from "zod";
 import { ModelProvider } from "./model.provider";
+import { InvoiceSystemPrompt } from "./schema/invoice";
 
 export class ExtractPdfError extends Data.TaggedError(
   "ExtractPDF/Process/Error"
@@ -12,7 +13,7 @@ export class ExtractPDFService extends Effect.Service<ExtractPDFService>()(
   {
     effect: Effect.gen(function* () {
       const models = yield* ModelProvider;
-      const SYSTEM_PROMPT = `You are a professional document data extraction assistant specialized in extracting structured data from invoices and receipts.
+      const _SYSTEM_PROMPT_FOR_OTHER = `You are a professional document data extraction assistant specialized in extracting structured data from invoices and receipts.
 
             Your task is to:
             1. Carefully analyze the PDF document
@@ -30,12 +31,12 @@ export class ExtractPDFService extends Effect.Service<ExtractPDFService>()(
             - Maintain consistent formatting across all extractions
             - Pay attention to line items and calculate totals if needed`;
 
-      const processInline = (pdfBuffer: Buffer, schema: z.ZodAny) =>
+      const processInline = <T>(pdfBuffer: Buffer, schema: z.ZodType<T>) =>
         Effect.tryPromise({
           try: () =>
             generateObject({
               model: models.gemini["2.5-flash"],
-              system: SYSTEM_PROMPT,
+              system: InvoiceSystemPrompt,
               schema,
               messages: [
                 {
@@ -59,7 +60,7 @@ export class ExtractPDFService extends Effect.Service<ExtractPDFService>()(
               error,
               message: "extract pdf in-line error",
             }),
-        });
+        }).pipe(Effect.andThen((res) => res.object));
 
       return {
         processInline,

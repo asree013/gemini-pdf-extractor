@@ -1,9 +1,12 @@
-import { Layer, ManagedRuntime } from "effect";
+import process from "node:process";
+import { Layer, Logger, LogLevel, ManagedRuntime } from "effect";
+import { ExtractPDFService } from "./extract-pdf.service";
 import { ModelProvider } from "./model.provider";
 
 const allLive = Layer.mergeAll(
-  ModelProvider.Default
-  // Logger.withMinimumLogLevel(LogLevel.Debug)
-);
+  ExtractPDFService.Default,
+  Logger.minimumLogLevel(LogLevel.fromLiteral(process.env.LOG_LEVEL || "All")),
+  Logger.pretty
+).pipe(Layer.provideMerge(ModelProvider.Default));
 
 export const Runtime = ManagedRuntime.make(allLive);
