@@ -43,7 +43,7 @@ CORE RULES
      • จำนวนเงิน, มูลค่า, มูลค่าค่าบริการ (บาท)
    - EN: Variable Cost Service - Quantity (MMBTU), Unit Price (THB/MMBTU), Amount (THB)
 
-   Total Amount (มูลค่ารวม):
+   Total Amount before Tax [NOT Grand Total] (มูลค่ารวม ก่อนคิด Tax):
    - TH: มูลค่ารวม, ยอดรวมทั้งสิ้น, จำนวนเงินรวม, ยอดชำระ
    - EN: Grand Total, Total Amount, Amount Due
 
@@ -130,7 +130,7 @@ export const PELNGInvoiceSchema = z.object({
     .number()
     .nonnegative()
     .describe(
-      "Grand Total / Total Amount (THB) | มูลค่ารวม / ยอดรวมทั้งสิ้น / จำนวนเงินรวม (บาท)"
+      "Total Amount (THB) [NOT Grand Total] | มูลค่ารวมก่อน Tax / จำนวนเงินก่อน Tax (บาท) "
     ),
 
   // Optional helpers
