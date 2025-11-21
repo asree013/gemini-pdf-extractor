@@ -12,7 +12,9 @@ RUN bun run build
 
 FROM base AS final
 COPY --from=build /app/dist dist
+COPY .env ./
+RUN bun i -g @dotenvx/dotenvx
 
 EXPOSE 3000
 
-CMD [ "bun", "run", "/dist/index.js" ]
+CMD ["dotenvx", "run", "-f", ".env", "--","bun", "run", "/dist/index.js" ]
