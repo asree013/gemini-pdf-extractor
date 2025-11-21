@@ -40,8 +40,8 @@ jobs:
             - name: Discord notification
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-                  USERNAME: ${{ vars.DOCKERHUB_USERNAME}}
+                  USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
                   IMG_NAME: gemini-pdf-extractor
               uses: Ilshidur/action-discord@master
               with:
-                  args: "> docker image **${{DOCKERHUB_USERNAME}}/IMG_NAME** has been **build** and **pushed** waiting for CD in another process."
+                  args: "> docker image **${{ env.USERNAME }}/${{ env.IMG_NAME }}** has been **build** and **pushed** waiting for CD in another process."
