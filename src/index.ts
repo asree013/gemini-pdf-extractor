@@ -9,6 +9,7 @@ import {
   PELNG_EXTRACTION_SYSTEM_PROMPT,
   PELNGInvoiceSchema,
 } from "./schema/pelng";
+import { CARGO_SYSTEM_PROMPT, CargoSchema } from "./schema/cargo";
 
 const app = new Elysia();
 
@@ -176,6 +177,49 @@ app
         }),
       },
       tags: ["Invoice"],
+    }
+  )
+  .post(
+    "/cargo",
+    async ({ body }) => {
+      const arrBuf = await body.file.arrayBuffer();
+      const fileBuffer = Buffer.from(arrBuf);
+
+      const program = Effect.all({
+        svc: ExtractPDFService
+      }).pipe(
+        Effect.andThen(({ svc }) =>
+          svc.processInline(
+            fileBuffer,
+            CARGO_SYSTEM_PROMPT,
+            CargoSchema
+          )
+        ),
+        Effect.catchTag("ExtractPDF/Process/Error", (error) =>
+          Effect.succeed(
+            Response.json(
+              {
+                message: error.message,
+                error: error.error,
+                status: "500",
+              },
+              {
+                status: 500,
+              }
+            )
+          )
+        )
+      );
+
+      const result = await Runtime.runPromise(program);
+      console.log({ result });
+      return result;
+    },
+    {
+      body: t.Object({
+        file: t.File({ format: "application/pdf" }),
+      }),
+      tags: ["Cargo"],
     }
   );
 
