@@ -111,7 +111,11 @@ export const LNGCargoSchemaFlat = z.object({
     .describe(
       "Closing Date / End of Unloading Date / วันที่สิ้นสุดการขนถ่ายสินค้า; ในภาพคือวันที่ที่ถูกไฮไลต์ด้วยพื้นหลังสีเหลือง ควรเป็นรูปแบบวันที่ ISO (YYYY-MM-DD) หากทราบ มิฉะนั้นส่งสตริงที่พบ"
     ),
-  // *********** START: Re-added calculated fields ***********
+  total_tax_amount: z
+    .number()
+    .describe(
+      "Taxable Base Amount / Total Taxable Amount / ยอดรวมฐานภาษีที่นำไปคำนวณภาษี; ดึงค่าจากบรรทัด 'Total Taxable Amount' (ในภาพคือ 34,181.13 ที่ถูกขีดเส้นใต้)"
+    )
 });
 
 export type LNGCargoFlat = z.infer<typeof LNGCargoSchemaFlat>;
@@ -125,6 +129,8 @@ You are a specialized data extraction assistant for LNG cargo shipping documents
 2) Numbers: Remove commas and units; extract numeric values only.
 3) Dates: Prefer ISO YYYY-MM-DD; if ambiguous, return the raw date string.
 4) Currency: Keep numeric values separate from currency symbols.
+5) **NO CALCULATION: Do NOT perform any arithmetic or calculation for any field. Only extract values directly displayed in the document.**
+6) **DATA SOURCE INTEGRITY: For all fields, the model MUST strictly use the numeric value explicitly and clearly displayed in the document.**
 
 ---
 ## FIELD-SPECIFIC INSTRUCTIONS:
@@ -137,47 +143,28 @@ You are a specialized data extraction assistant for LNG cargo shipping documents
 - voyage_net_amount_usd: Net Invoice Amount USD.
 - voyage_total_amount_incl_gst: Final grand total including GST/VAT if explicitly shown; otherwise omit.
 
-- unloading_higher_heating_value: HHV/GHV numeric value only.
+- **hhv_volume**: HHV / GHV / Higher Heating Value. Extract the numeric value from the 'HIGHER HEATING VALUE (VOLUME)' line in Section 4. DISCHARGE INFORMATION.
 
 - quantity_net_delivered: Return NET DELIVERED strictly in Metric Tons (MT).
 
-- **survey_fee_before_tax**: Surveyor/Inspection fee before tax (exclude VAT). **Extract the total sum of Inspection/Survey fees and Analysis fees which is located immediately above the 'Value Added Tax' line (e.g., 14,375.00 in the red box).**
+- survey_fee_before_tax: Surveyor/Inspection fee before tax (exclude VAT). Extract the total sum of Inspection/Survey fees and Analysis fees which is located immediately above the 'Value Added Tax' line.
 
 - exchange_rate_usd_to_thb: Extract FX rate as the numeric THB per 1 USD. If multiple rates exist, prefer the BOT announced selling rate on unloading/settlement date.
 
 - closing_date: Extract the 'TO' date from the 'DATE FROM TO' range, which represents the End of Unloading/Closing Date.
 
+- **total_tax_amount**: Extract the **Total Taxable Amount** (ยอดรวมฐานภาษี) from the row labeled **'Total Taxable Amount'** in the summary table. **The expected value is 34,181.13.**
+
 CUSTOMS CLEARANCE SERVICES (ARRAY) - CRITICAL RULES:
 ⚠️ ONLY extract FINAL TOTAL lines (e.g., "รวมทั้งสิ้น", "Total", "Grand Total", "Net Total").
-⚠️ DO NOT extract individual line items, sub-amounts, or breakdowns (e.g., fees of 25000, 200, 3280, 1000).
+⚠️ DO NOT extract individual line items, sub-amounts, or breakdowns.
 ⚠️ Look for the FINAL AGGREGATED SUM that represents the complete cost for that section/page.
-⚠️ If a page shows: 25000 + 200 + 3280 + 1000 = 29480, ONLY extract 29480 (the final total).
-⚠️ The "description" field should contain ONLY the exact label of the final total line (e.g., "รวมทั้งสิ้น", "Total Amount", "Net Total").
-⚠️ Do NOT add explanatory text like "as per breakdown" or "page 1" in the description.
-⚠️ If multiple pages each have a "รวมทั้งสิ้น" line, include one array entry per page's final total.
-
-Examples of CORRECT customs_clearance_services extraction:
-✓ { "description": "รวมทั้งสิ้น", "final_cost": 29480, "currency": "THB" }
-✓ { "description": "Total", "final_cost": 29480, "currency": "THB" }
-✓ { "description": "Customs Clearance Service", "final_cost": 29480, "currency": "THB" } (if that's the section header above the final total)
-
-Examples of INCORRECT extraction (DO NOT DO THIS):
-✗ { "description": "Customs Clearance (as per breakdown on page 1)", "final_cost": 25000, "currency": "THB" }
-✗ { "description": "Service Fee", "final_cost": 200, "currency": "THB" }
-✗ Multiple entries for line items that sum to a total
+⚠️ The "description" field should contain ONLY the exact label of the final total line.
 
 ---
 ## GENERAL:
 - Only extract values explicitly present in the document; do not guess.
 - If a field is not found, leave it undefined/null per schema behavior.
-- Ignore repeated headers/footers.
-- When conflicting values appear, prefer the most specific field near the relevant section header (e.g., use values from the invoice table for price/amount).
-
-QUALITY CHECKS (soft):
-- voyage_net_amount_usd ≈ voyage_quantity_mmbtu × voyage_price_usd_per_mmbtu (allow rounding).
-- quantity_net_delivered (MT) should not be confused with MMBTU; keep them separate.
-- exchange_rate_usd_to_thb should be THB per 1 USD.
-- customs_clearance_services array should have few entries (typically 1-3 final totals), NOT many line items.
 
 OUTPUT: Return only valid JSON conforming to the schema. Do not include explanations or markdown.
 `;
