@@ -1,0 +1,94 @@
+name: Test Build for Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run type check (if using TypeScript)
+        run: bun run type-check
+        continue-on-error: true
+
+      - name: Build project
+        run: bun run build
+
+      - name: Run tests (if available)
+        run: bun test
+        continue-on-error: true
+
+      - name: Comment on PR - Success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Build test **passed**! Your changes build successfully with Bun.'
+            })
+
+      - name: Comment on PR - Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Build test **failed**! Please check the workflow logs for details.'
+            })
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: test-build
+    if: always()
+    steps:
+      - name: Discord notification - Success
+        if: needs.test-build.result == 'success'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            ✅ **PR Build Test Passed**
+            > **PR #${{ github.event.pull_request.number }}**: ${{ github.event.pull_request.title }}
+            > **Author**: ${{ github.event.pull_request.user.login }}
+            > **Branch**: `${{ github.event.pull_request.head.ref }}`
+            > [View PR](${{ github.event.pull_request.html_url }})
+
+      - name: Discord notification - Failure
+        if: needs.test-build.result == 'failure'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            ❌ **PR Build Test Failed**
+            > **PR #${{ github.event.pull_request.number }}**: ${{ github.event.pull_request.title }}
+            > **Author**: ${{ github.event.pull_request.user.login }}
+            > **Branch**: `${{ github.event.pull_request.head.ref }}`
+            > [View PR](${{ github.event.pull_request.html_url }})
+            > [View Logs]($${{ github.server_url }}/$$ {{ github.repository }}/actions/runs/${{ github.run_id }})
