@@ -1,5 +1,10 @@
 import path from "node:path";
-import { describe } from "vitest";
+import { Effect } from "effect";
+import { describe, expect, it } from "vitest";
+import { ExtractPDFService } from "../src/extract-pdf.service";
+import { readFileAndSize } from "../src/helpers";
+import { Runtime } from "../src/runtime";
+import { pttSupplySchemaAndPrompt } from "../src/schema/ptt/supply";
 
 const files = {
   egat: path.join(__dirname, "Invoice_EGAT.pdf"),
@@ -138,38 +143,45 @@ describe("extract invoice", () => {
     });
 
     */
-  // it("should extract invoice data", async () => {
-  //   const { file } = await readFileAndSize(files.ptt.supply.invoice);
-  //   const program = Effect.all({
-  //     svc: ExtractPDFService,
-  //   }).pipe(
-  //     Effect.andThen(({ svc }) =>
-  //       svc.processInline(
-  //         file,
-  //         pttSupplySchemaAndPrompt.invoice.systemPrompt,
-  //         pttSupplySchemaAndPrompt.invoice.schema
-  //       )
-  //     ),
-  //     Effect.tap((data) => Effect.log("data", data)),
-  //     Effect.tapError((error) => Effect.logError("error -->", error.error))
-  //   );
-  //   const object = await Runtime.runPromise(program);
-  //   // [
-  //   //   {
-  //   //     invoice_number: '1631100234',
-  //   //     quantity: 14952366,
-  //   //     amount_before_vat: 2268499702.92
-  //   //   },
-  //   //   {
-  //   //     invoice_number: '1631100235',
-  //   //     quantity: 8857134,
-  //   //     amount_before_vat: 1343760970.53
-  //   //   }
-  //   // ]
-  //   expect(object.length).toEqual(2);
-  //   expect(object[0]?.quantity).toEqual(14_952_366);
-  //   expect(object[0]?.amount_before_vat).toEqual(2_268_499_702.92);
-  //   expect(object[1]?.quantity).toEqual(8_857_134);
-  //   expect(object[1]?.amount_before_vat).toEqual(1_343_760_970.53);
-  // });
+  it("should extract invoice data", async () => {
+    const { file } = await readFileAndSize(files.ptt.supply.invoice);
+    const program = Effect.all({
+      svc: ExtractPDFService,
+    }).pipe(
+      Effect.andThen(({ svc }) =>
+        svc.processInline(
+          file,
+          pttSupplySchemaAndPrompt.invoice.systemPrompt,
+          pttSupplySchemaAndPrompt.invoice.schema
+        )
+      ),
+      Effect.tap((data) => Effect.log("data", data)),
+      Effect.tapError((error) => Effect.logError("error -->", error.error))
+    );
+    const object = await Runtime.runPromise(program);
+
+    // {
+    //    invoices: [
+    //      {
+    //        invoice_number: '1631100234',
+    //        quantity: 14952366,
+    //        amount_before_vat: 2268499702.92
+    //      },
+    //      {
+    //        invoice_number: '1631100235',
+    //        quantity: 8857134,
+    //        amount_before_vat: 1343760970.53
+    //      }
+    //    ],
+    //    overall_confidence_score: 99
+    //  }
+
+    const invoices = object.invoices;
+
+    expect(invoices.length).toEqual(2);
+    expect(invoices[0]?.quantity).toEqual(14_952_366);
+    expect(invoices[0]?.amount_before_vat).toEqual(2_268_499_702.92);
+    expect(invoices[1]?.quantity).toEqual(8_857_134);
+    expect(invoices[1]?.amount_before_vat).toEqual(1_343_760_970.53);
+  });
 });
