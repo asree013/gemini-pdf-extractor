@@ -9,6 +9,7 @@ import {
   PELNG_EXTRACTION_SYSTEM_PROMPT,
   PELNGInvoiceSchema,
 } from "./schema/pelng";
+import { TSO_SYSTEM_PROMPT, TSOfileSchema } from "./schema/tso";
 
 const app = new Elysia();
 
@@ -69,7 +70,7 @@ app
           description: "Upload an invoice",
         }
       ),
-      tags: ["Invoice"],
+      tags: ["PDF"],
     }
   )
   .post(
@@ -112,7 +113,7 @@ app
       body: t.Object({
         file: t.File({ format: "application/pdf" }),
       }),
-      tags: ["Invoice"],
+      tags: ["PDF"],
     }
   )
   .post(
@@ -145,10 +146,43 @@ app
       body: t.Object({
         file: t.File({ format: "application/pdf" }),
       }),
-      tags: ["Invoice"],
+      tags: ["PDF"],
     }
   )
-  
+  .post(
+    "/tso",
+    async ({ body, set }) => {
+      const arrBuf = await body.file.arrayBuffer();
+      const fileBuffer = Buffer.from(arrBuf);
+
+      const program = Effect.all({
+        svc: ExtractPDFService,
+      }).pipe(
+        Effect.andThen(({ svc }) =>
+          svc.processInline(fileBuffer, TSO_SYSTEM_PROMPT, TSOfileSchema)
+        ),
+        Effect.catchTag("ExtractPDF/Process/Error", (error) => {
+          set.status = 500;
+          return Effect.succeed({
+            message: error.message,
+            error: error.error,
+            status: "500",
+          });
+        })
+      );
+
+      const result = await Runtime.runPromise(program);
+      console.log({ result });
+      return result;
+    },
+    {
+      body: t.Object({
+        file: t.File({ format: "application/pdf" }),
+      }),
+      tags: ["PDF"],
+    }
+  )
+
 
 app.listen(3000);
 console.log("server start at port:", 3000);
