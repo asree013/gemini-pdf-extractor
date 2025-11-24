@@ -131,7 +131,7 @@ export const PELNGInvoiceSchema = z.object({
     .nonnegative()
     .describe(
       "Station/Terminal Service Fee (THB), equals sum of fixed-cost and variable-cost service amounts | " +
-        "ค่าบริการสถานี (บาท) = รวมจำนวนเงินค่าบริการส่วนต้นทุนคงที่ + ค่าบริการต้นทุนผันแปร"
+      "ค่าบริการสถานี (บาท) = รวมจำนวนเงินค่าบริการส่วนต้นทุนคงที่ + ค่าบริการต้นทุนผันแปร"
     ),
 
   // Fixed-Cost Service (ค่าบริการส่วนต้นทุนคงที่)
@@ -235,12 +235,12 @@ export const PELNGInvoiceSchema = z.object({
     .describe("Fixed-Cost Lc Amount (THB)"),
 
   // // page 8
-  fixed_cost_ld_phase_2_5_mtpa_quantity : z
+  fixed_cost_ld_phase_2_5_mtpa_quantity: z
     .number()
     .nonnegative()
     .optional()
     .describe("Fixed-Cost Ld Amount (THB)"),
-    
+
   fixed_cost_ld_phase_2_5_mtpa_price_per_unit: z
     .number()
     .nonnegative()
@@ -273,7 +273,7 @@ export const PELNGInvoiceSchema = z.object({
 
   // page 9
 
-  fixed_cost_ld_05_mtpa_quantity : z
+  fixed_cost_ld_05_mtpa_quantity: z
     .number()
     .nonnegative()
     .optional()
@@ -327,7 +327,7 @@ export const PELNGInvoiceSchema = z.object({
     .optional()
     .describe("Fixed-Cost Lc Amount (THB)"),
 
-  fixed_cost_ld_07_mtpa_quantity : z
+  fixed_cost_ld_07_mtpa_quantity: z
     .number()
     .nonnegative()
     .optional()
@@ -387,7 +387,7 @@ export const PELNGInvoiceSchema = z.object({
     .optional()
     .describe("ราคา LNG สำหรับเที่ยวที่ 2 เดือน สิงหาคม 2568 | รวมค่าเนื้อ LNG และค่าใช้จ่ายนำเข้า"),
 
-  no_3_rate_baht_per_mmbtu:z
+  no_3_rate_baht_per_mmbtu: z
     .number()
     .nonnegative()
     .optional()
@@ -399,12 +399,29 @@ export const PELNGInvoiceSchema = z.object({
     .optional()
     .describe("ราคา LNG สำหรับเที่ยวที่ 4 เดือน สิงหาคม 2568 | รวมค่าเนื้อ LNG และค่าใช้จ่ายนำเข้า"),
 
-  no_5_rate_baht_per_mmbtu:z
+  no_5_rate_baht_per_mmbtu: z
     .number()
     .nonnegative()
     .optional()
     .describe("ราคา LNG สำหรับเที่ยวที่ 5 เดือน สิงหาคม 2568 | รวมค่าเนื้อ LNG และค่าใช้จ่ายนำเข้า"),
-  
+
+  total_regas_sendout_null: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe("ปริมาณเนื้อ Regas LNG ทั้งหมด"),
+
+  total_regas_lng_value_null: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe("มูลค่าเนื้อ Regas LNG ทั้งหมด"),
+
+  total_service_value_null: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe("ค่าบริการสถานี"),
 });
 
 export type PELNGInvoice = z.infer<typeof PELNGInvoiceSchema>;
