@@ -2,6 +2,7 @@ import openapi from "@elysiajs/openapi";
 import { Effect } from "effect";
 import Elysia, { t } from "elysia";
 import { ExtractPDFService } from "./extract-pdf.service";
+import { pttRoutes } from "./routes/ptt";
 import { Runtime } from "./runtime";
 import { CARGO_SYSTEM_PROMPT, LNGCargoSchemaFlat } from "./schema/cargo";
 import { InvoiceSchema, InvoiceSystemPrompt } from "./schema/invoice";
@@ -29,6 +30,7 @@ app
     })
   )
   .get("/health", () => "Ok")
+  .use(pttRoutes)
   .post(
     "/invoice",
     async ({ body }) => {

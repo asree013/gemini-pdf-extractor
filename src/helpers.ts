@@ -1,4 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
+import { t } from "elysia";
+
 export const readFileAndSize = async (filePath: string) => {
   const pdfPath = filePath;
   const file = await readFile(pdfPath);
@@ -12,3 +14,5 @@ export const readFileAndSize = async (filePath: string) => {
     sizeInMb,
   };
 };
+
+export const elysiaPdf = t.File({ format: "application/pdf" });

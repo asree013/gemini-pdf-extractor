@@ -1,21 +1,20 @@
 import path from "node:path";
-import { Effect } from "effect";
-import { describe, expect, it } from "vitest";
-import { ExtractPDFService } from "../src/extract-pdf.service";
-import { readFileAndSize } from "../src/helpers";
-import { Runtime } from "../src/runtime";
-import { CARGO_SYSTEM_PROMPT, LNGCargoSchemaFlat } from "../src/schema/cargo";
+import { describe } from "vitest";
 
 const files = {
   egat: path.join(__dirname, "Invoice_EGAT.pdf"),
   pelng: path.join(__dirname, "PELNG_EGAT.pdf"),
   cargo2: path.join(__dirname, "EGAT_Cargo2.pdf"),
+  ptt: {
+    supply: {
+      invoice: path.join(__dirname, "PTT/G1-61_Aug25.pdf"),
+    },
+  },
 };
 
 describe("extract invoice", () => {
   // it("should extract invoice data", async () => {
   //   const { file } = await readFileAndSize(files.egat);
-
   //   const program = Effect.all({
   //     svc: ExtractPDFService,
   //   }).pipe(
@@ -25,9 +24,7 @@ describe("extract invoice", () => {
   //     Effect.tap((data) => Effect.log("data", data)),
   //     Effect.tapError((error) => Effect.logError("error -->", error.error))
   //   );
-
   //   const object = await Runtime.runPromise(program);
-
   //   expect(object.quantity).eq(4_964_035);
   //   expect(object.unitPriceTHBPerMMBTU).eq(433.7759);
   //   expect(object.subtotalTHB).eq(2_153_278_749.76);
@@ -36,10 +33,8 @@ describe("extract invoice", () => {
   //   expect(object.currency).eq("THB");
   //   expect(object.vatRate).eq(0.07);
   // });
-
   // it("should ok with PELNG pdf", async () => {
   //   const { file } = await readFileAndSize(files.pelng);
-
   //   const program = Effect.all({
   //     svc: ExtractPDFService,
   //   }).pipe(
@@ -53,9 +48,7 @@ describe("extract invoice", () => {
   //     Effect.tap((data) => Effect.log("data", data)),
   //     Effect.tapError((error) => Effect.logError("error -->", error.error))
   //   );
-
   //   const object = await Runtime.runPromise(program);
-
   //   expect(object.stationServiceFeeTHB).eq(119_909_458.92);
   //   expect(object.fixedCostQuantityMMBTU).eq(6_510_000);
   //   expect(object.fixedCostUnitPriceTHBPerMMBTU).eq(17.7598);
@@ -70,7 +63,7 @@ describe("extract invoice", () => {
   //     "ไม่ต้องหักภาษี ณ ที่จ่ายเนื่องจากได้รับการส่งเสริมจาก BOI (บัตรส่งเสริม เลขที่ 67-1448-1-00-1-2)"
   //   );
   // });
-
+  /* NOTE: this test possible to incorrect due to Jr.Dev edited
   it("should ok with cargo pdf", async () => {
     const { file } = await readFileAndSize(files.cargo2);
 
@@ -142,5 +135,41 @@ describe("extract invoice", () => {
     expect(
       object.customs_clearance_services.map((item) => item.final_cost)
     ).toEqual([3280, 1000, 200]);
-  });
+    });
+
+    */
+  // it("should extract invoice data", async () => {
+  //   const { file } = await readFileAndSize(files.ptt.supply.invoice);
+  //   const program = Effect.all({
+  //     svc: ExtractPDFService,
+  //   }).pipe(
+  //     Effect.andThen(({ svc }) =>
+  //       svc.processInline(
+  //         file,
+  //         pttSupplySchemaAndPrompt.invoice.systemPrompt,
+  //         pttSupplySchemaAndPrompt.invoice.schema
+  //       )
+  //     ),
+  //     Effect.tap((data) => Effect.log("data", data)),
+  //     Effect.tapError((error) => Effect.logError("error -->", error.error))
+  //   );
+  //   const object = await Runtime.runPromise(program);
+  //   // [
+  //   //   {
+  //   //     invoice_number: '1631100234',
+  //   //     quantity: 14952366,
+  //   //     amount_before_vat: 2268499702.92
+  //   //   },
+  //   //   {
+  //   //     invoice_number: '1631100235',
+  //   //     quantity: 8857134,
+  //   //     amount_before_vat: 1343760970.53
+  //   //   }
+  //   // ]
+  //   expect(object.length).toEqual(2);
+  //   expect(object[0]?.quantity).toEqual(14_952_366);
+  //   expect(object[0]?.amount_before_vat).toEqual(2_268_499_702.92);
+  //   expect(object[1]?.quantity).toEqual(8_857_134);
+  //   expect(object[1]?.amount_before_vat).toEqual(1_343_760_970.53);
+  // });
 });

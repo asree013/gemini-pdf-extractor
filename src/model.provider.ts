@@ -12,7 +12,7 @@ export class ModelProvider extends Effect.Service<ModelProvider>()(
 
       const gemini = {
         "2.5-flash": google("gemini-2.5-flash"),
-        "2.5-pro": google("gemini-2.5-pro"),
+        // "2.5-pro": google("gemini-2.5-pro"),
       };
 
       return {
